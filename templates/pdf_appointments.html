@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Appointments Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; margin: 0; }
+        .header p { margin: 5px 0; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #2c3e50; color: white; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .status-scheduled { color: #f39c12; font-weight: bold; }
+        .status-completed { color: #27ae60; font-weight: bold; }
+        .status-cancelled { color: #e74c3c; font-weight: bold; }
+        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hospital Management System</h1>
+        <h2>Appointments Report</h2>
+        <p>Generated on: {{ date }}</p>
+        <p>Total Appointments: {{ appointments|length }}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Doctor</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Fee</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr>
+                <td>{{ appointment.id }}</td>
+                <td>{{ appointment.patient_name }}</td>
+                <td>{{ appointment.doctor_name }}</td>
+                <td>{{ appointment.appointment_date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ appointment.appointment_date.strftime('%I:%M %p') }}</td>
+                <td class="status-{{ appointment.status.lower() }}">{{ appointment.status }}</td>
+                <td>${{ "%.2f"|format(appointment.fee) }}</td>
+                <td>{{ appointment.notes or 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p>Hospital Management System - Appointment Schedule Report</p>
+        <p>This report contains confidential medical appointment information.</p>
+    </div>
+</body>
+</html>

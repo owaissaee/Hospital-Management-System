@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Hospital Management System{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-6">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+        <p class="lead text-muted">Welcome back, {{ session.username }}! Here's your hospital overview.</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-5">
+    <!-- Total Patients -->
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card success h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-people display-4 mb-3"></i>
+                <h3 class="card-title">{{ stats.total_patients }}</h3>
+                <p class="card-text">Total Patients</p>
+                <a href="{{ url_for('patients') }}" class="btn btn-light btn-sm">
+                    <i class="bi bi-eye"></i> View All
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Doctors -->
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card info h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-person-badge display-4 mb-3"></i>
+                <h3 class="card-title">{{ stats.total_doctors }}</h3>
+                <p class="card-text">Total Doctors</p>
+                <a href="{{ url_for('doctors') }}" class="btn btn-light btn-sm">
+                    <i class="bi bi-eye"></i> View All
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Appointments -->
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card warning h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-check display-4 mb-3"></i>
+                <h3 class="card-title">{{ stats.today_appointments }}</h3>
+                <p class="card-text">Today's Appointments</p>
+                <a href="{{ url_for('appointments') }}" class="btn btn-light btn-sm">
+                    <i class="bi bi-eye"></i> View All
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Income -->
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-dollar display-4 mb-3"></i>
+                <h3 class="card-title">${{ "%.2f"|format(stats.total_income) }}</h3>
+                <p class="card-text">Total Income</p>
+                <small class="text-light">From all appointments</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3><i class="bi bi-lightning"></i> Quick Actions</h3>
+        <p class="text-muted">Frequently used actions for efficient management</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Add New Patient -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-person-plus display-4 text-success mb-3"></i>
+                <h5 class="card-title">Add New Patient</h5>
+                <p class="card-text">Register a new patient in the system</p>
+                <a href="{{ url_for('add_patient') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Add Patient
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add New Doctor -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-person-badge-fill display-4 text-info mb-3"></i>
+                <h5 class="card-title">Add New Doctor</h5>
+                <p class="card-text">Register a new doctor in the system</p>
+                <a href="{{ url_for('add_doctor') }}" class="btn btn-info">
+                    <i class="bi bi-plus-circle"></i> Add Doctor
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedule Appointment -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar-plus display-4 text-warning mb-3"></i>
+                <h5 class="card-title">Schedule Appointment</h5>
+                <p class="card-text">Book a new appointment</p>
+                <a href="{{ url_for('add_appointment') }}" class="btn btn-warning">
+                    <i class="bi bi-plus-circle"></i> Schedule
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-clock-history"></i> System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-check-circle text-success"></i> System Online</h6>
+                        <p class="text-muted">All services are running normally</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-shield-check text-success"></i> Database Connected</h6>
+                        <p class="text-muted">MySQL connection is stable</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000); // 5 minutes
+</script>
+{% endblock %}

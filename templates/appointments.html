@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments - Hospital Management System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-calendar-check"></i> Appointments Management</h1>
+        <p class="text-muted">Schedule and manage patient appointments</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('add_appointment') }}" class="btn btn-primary">
+            <i class="bi bi-calendar-plus"></i> Schedule New Appointment
+        </a>
+        <a href="{{ url_for('download_appointments_pdf') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-pdf"></i> Download PDF
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="GET" class="d-flex">
+            <input type="date" class="form-control me-2" name="date" value="{{ date_filter }}">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-funnel"></i> Filter by Date
+            </button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        {% if date_filter %}
+            <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Clear Filter
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Appointments Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="bi bi-table"></i> Appointments List 
+            {% if date_filter %}
+                <small class="text-muted">({{ date_filter }})</small>
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if appointments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date & Time</th>
+                            <th>Fee</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td><span class="badge bg-primary">{{ appointment.id }}</span></td>
+                            <td>
+                                <strong>{{ appointment.patient_name }}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ appointment.doctor_name }}</strong>
+                                {% if appointment.doctor_specialization %}
+                                    <br><small class="text-muted">{{ appointment.doctor_specialization }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="bi bi-calendar"></i> 
+                                {{ appointment.appointment_date.strftime('%Y-%m-%d') if appointment.appointment_date else 'N/A' }}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> 
+                                    {{ appointment.appointment_date.strftime('%I:%M %p') if appointment.appointment_date else 'N/A' }}
+                                </small>
+                            </td>
+                            <td>
+                                <strong>${{ "%.2f"|format(appointment.fee) }}</strong>
+                            </td>
+                            <td>
+                                {% if appointment.status == 'Scheduled' %}
+                                    <span class="badge bg-warning">{{ appointment.status }}</span>
+                                {% elif appointment.status == 'Completed' %}
+                                    <span class="badge bg-success">{{ appointment.status }}</span>
+                                {% elif appointment.status == 'Cancelled' %}
+                                    <span class="badge bg-danger">{{ appointment.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ appointment.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if appointment.notes %}
+                                    <span data-bs-toggle="tooltip" title="{{ appointment.notes }}">
+                                        <i class="bi bi-sticky"></i> Notes
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">No notes</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#appointmentModal{{ appointment.id }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <a href="{{ url_for('edit_appointment', appointment_id=appointment.id) }}" 
+                                       class="btn btn-outline-warning">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if appointment.status == 'Scheduled' %}
+                                        <a href="{{ url_for('complete_appointment', appointment_id=appointment.id) }}" 
+                                           class="btn btn-outline-success"
+                                           onclick="return confirm('Mark this appointment as completed?')">
+                                            <i class="bi bi-check-circle"></i>
+                                        </a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-danger"
+                                            onclick="deleteAppointment({{ appointment.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Appointment Details Modal -->
+                        <div class="modal fade" id="appointmentModal{{ appointment.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-calendar-check"></i> Appointment Details
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Appointment Information</h6>
+                                                <p><strong>ID:</strong> {{ appointment.id }}</p>
+                                                <p><strong>Date:</strong> {{ appointment.appointment_date.strftime('%B %d, %Y') if appointment.appointment_date else 'N/A' }}</p>
+                                                <p><strong>Time:</strong> {{ appointment.appointment_date.strftime('%I:%M %p') if appointment.appointment_date else 'N/A' }}</p>
+                                                <p><strong>Status:</strong> 
+                                                    <span class="badge bg-{{ 'warning' if appointment.status == 'Scheduled' else 'success' if appointment.status == 'Completed' else 'danger' }}">
+                                                        {{ appointment.status }}
+                                                    </span>
+                                                </p>
+                                                <p><strong>Fee:</strong> ${{ "%.2f"|format(appointment.fee) }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Patient & Doctor</h6>
+                                                <p><strong>Patient:</strong> {{ appointment.patient_name }}</p>
+                                                <p><strong>Doctor:</strong> {{ appointment.doctor_name }}</p>
+                                                {% if appointment.doctor_specialization %}
+                                                    <p><strong>Specialization:</strong> {{ appointment.doctor_specialization }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if appointment.notes %}
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <h6>Notes</h6>
+                                                    <p class="bg-light p-3 rounded">{{ appointment.notes }}</p>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <a href="{{ url_for('edit_appointment', appointment_id=appointment.id) }}" 
+                                           class="btn btn-warning">
+                                            <i class="bi bi-pencil"></i> Edit Appointment
+                                        </a>
+                                        {% if appointment.status == 'Scheduled' %}
+                                            <a href="{{ url_for('complete_appointment', appointment_id=appointment.id) }}" 
+                                               class="btn btn-success"
+                                               onclick="return confirm('Mark this appointment as completed?')">
+                                                <i class="bi bi-check-circle"></i> Mark Complete
+                                            </a>
+                                        {% endif %}
+                                        {% if appointment.status != 'Cancelled' %}
+                                            <a href="{{ url_for('cancel_appointment', appointment_id=appointment.id) }}" 
+                                               class="btn btn-outline-danger"
+                                               onclick="return confirm('Cancel this appointment?')">
+                                                <i class="bi bi-x-circle"></i> Cancel
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Appointments Summary -->
+            <div class="mt-3">
+                <small class="text-muted">
+                    Showing {{ appointments|length }} appointment(s)
+                    {% if date_filter %}
+                        for {{ date_filter }}
+                    {% endif %}
+                </small>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x display-1 text-muted"></i>
+                <h4 class="mt-3">No Appointments Found</h4>
+                {% if date_filter %}
+                    <p class="text-muted">No appointments found for {{ date_filter }}</p>
+                    <a href="{{ url_for('appointments') }}" class="btn btn-outline-primary">View All Appointments</a>
+                {% else %}
+                    <p class="text-muted">Start by scheduling your first appointment</p>
+                    <a href="{{ url_for('add_appointment') }}" class="btn btn-primary">
+                        <i class="bi bi-calendar-plus"></i> Schedule First Appointment
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Auto-set today's date in filter
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.querySelector('input[name="date"]');
+        if (dateInput && !dateInput.value) {
+            // Optionally set to today's date
+            // dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    });
+
+    function deleteAppointment(appointmentId) {
+        if (confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+            window.location.href = '/delete_appointment/' + appointmentId;
+        }
+    }
+</script>
+{% endblock %}

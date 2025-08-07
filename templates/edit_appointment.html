@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Appointment - Hospital Management System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-calendar-event"></i> Edit Appointment</h1>
+        <p class="text-muted">Update appointment details</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Appointments
+        </a>
+    </div>
+</div>
+
+<!-- Appointment Edit Form -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-form"></i> Edit Appointment #{{ appointment.id }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <!-- Patient & Doctor Selection -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-people"></i> Patient & Doctor
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="patient_id" class="form-label">Select Patient *</label>
+                                <select class="form-select" id="patient_id" name="patient_id" required>
+                                    <option value="">Choose a patient...</option>
+                                    {% for patient in patients %}
+                                        <option value="{{ patient.id }}" {{ 'selected' if patient.id == appointment.patient_id else '' }}>
+                                            {{ patient.name }} ({{ patient.phone }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a patient.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="doctor_id" class="form-label">Select Doctor *</label>
+                                <select class="form-select" id="doctor_id" name="doctor_id" required onchange="updateFee()">
+                                    <option value="">Choose a doctor...</option>
+                                    {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}" data-fee="{{ doctor.fee }}" {{ 'selected' if doctor.id == appointment.doctor_id else '' }}>
+                                            {{ doctor.name }} - {{ doctor.specialization }} (${{ "%.2f"|format(doctor.fee) }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a doctor.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date, Time & Fee -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-calendar"></i> Schedule & Fee
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="appointment_date" class="form-label">Appointment Date *</label>
+                                <input type="date" class="form-control" id="appointment_date" name="appointment_date" 
+                                       value="{{ appointment.appointment_date.strftime('%Y-%m-%d') }}" required>
+                                <div class="invalid-feedback">
+                                    Please select a valid date.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="appointment_time" class="form-label">Appointment Time *</label>
+                                <input type="time" class="form-control" id="appointment_time" name="appointment_time" 
+                                       value="{{ appointment.appointment_date.strftime('%H:%M') }}" required>
+                                <div class="invalid-feedback">
+                                    Please select a time.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="fee" class="form-label">Consultation Fee ($) *</label>
+                                <input type="number" class="form-control" id="fee" name="fee" 
+                                       min="0" step="0.01" value="{{ appointment.fee }}" required>
+                                <div class="form-text">
+                                    You can manually adjust the fee if needed
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status *</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="Scheduled" {{ 'selected' if appointment.status == 'Scheduled' else '' }}>Scheduled</option>
+                                    <option value="Completed" {{ 'selected' if appointment.status == 'Completed' else '' }}>Completed</option>
+                                    <option value="Cancelled" {{ 'selected' if appointment.status == 'Cancelled' else '' }}>Cancelled</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a status.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-chat-text"></i> Additional Information
+                            </h6>
+                            
+                            <div class="mb-4">
+                                <label for="notes" class="form-label">Appointment Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                          placeholder="Enter any special instructions, symptoms, or notes for this appointment...">{{ appointment.notes or '' }}</textarea>
+                                <div class="form-text">
+                                    Include reason for visit, symptoms, or special requirements
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Update Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Update fee when doctor is selected
+    function updateFee() {
+        const doctorSelect = document.getElementById('doctor_id');
+        const feeInput = document.getElementById('fee');
+        const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
+        
+        if (selectedOption.value) {
+            const fee = selectedOption.getAttribute('data-fee');
+            feeInput.value = fee;
+        }
+    }
+    
+    // Form submission confirmation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (this.checkValidity()) {
+            if (!confirm('Are you sure you want to update this appointment?')) {
+                e.preventDefault();
+            }
+        }
+    });
+</script>
+{% endblock %}

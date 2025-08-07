@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Patients - Hospital Management System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-people"></i> Patients Management</h1>
+        <p class="text-muted">Manage patient records and information</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('add_patient') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Add New Patient
+        </a>
+        <a href="{{ url_for('download_patients_pdf') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-file-pdf"></i> Download PDF
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="GET" class="d-flex">
+            <input type="text" class="form-control me-2" name="search" 
+                   placeholder="Search by name or phone..." value="{{ search }}">
+            <button type="submit" class="btn btn-outline-primary">
+                <i class="bi bi-search"></i> Search
+            </button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        {% if search %}
+            <a href="{{ url_for('patients') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Clear Search
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Patients Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="bi bi-table"></i> Patients List 
+            {% if search %}
+                <small class="text-muted">(Search results for "{{ search }}")</small>
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if patients %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td><span class="badge bg-primary">{{ patient.id }}</span></td>
+                            <td>
+                                <strong>{{ patient.name }}</strong>
+                                {% if patient.medical_history %}
+                                    <br><small class="text-muted">Has medical history</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.age }} years</td>
+                            <td>
+                                <span class="badge bg-{{ 'info' if patient.gender == 'Male' else 'warning' }}">
+                                    {{ patient.gender }}
+                                </span>
+                            </td>
+                            <td>
+                                <i class="bi bi-telephone"></i> {{ patient.phone }}
+                            </td>
+                            <td>
+                                {% if patient.email %}
+                                    <i class="bi bi-envelope"></i> {{ patient.email }}
+                                {% else %}
+                                    <span class="text-muted">No email</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ patient.created_at.strftime('%Y-%m-%d') if patient.created_at else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#patientModal{{ patient.id }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" 
+                                       class="btn btn-outline-warning">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger"
+                                            onclick="deletePatient({{ patient.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Patient Details Modal -->
+                        <div class="modal fade" id="patientModal{{ patient.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-person"></i> {{ patient.name }} - Details
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Personal Information</h6>
+                                                <p><strong>Name:</strong> {{ patient.name }}</p>
+                                                <p><strong>Age:</strong> {{ patient.age }} years</p>
+                                                <p><strong>Gender:</strong> {{ patient.gender }}</p>
+                                                <p><strong>Phone:</strong> {{ patient.phone }}</p>
+                                                <p><strong>Email:</strong> {{ patient.email or 'Not provided' }}</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Address</h6>
+                                                <p>{{ patient.address or 'Not provided' }}</p>
+                                                
+                                                <h6>Medical History</h6>
+                                                <p>{{ patient.medical_history or 'No medical history recorded' }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary">Edit Patient</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Patients Summary -->
+            <div class="mt-3">
+                <small class="text-muted">
+                    Showing {{ patients|length }} patient(s)
+                    {% if search %}
+                        matching "{{ search }}"
+                    {% endif %}
+                </small>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people display-1 text-muted"></i>
+                <h4 class="mt-3">No Patients Found</h4>
+                {% if search %}
+                    <p class="text-muted">No patients match your search criteria "{{ search }}"</p>
+                    <a href="{{ url_for('patients') }}" class="btn btn-outline-primary">View All Patients</a>
+                {% else %}
+                    <p class="text-muted">Start by adding your first patient to the system</p>
+                    <a href="{{ url_for('add_patient') }}" class="btn btn-primary">
+                        <i class="bi bi-person-plus"></i> Add First Patient
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add search functionality with Enter key
+    document.querySelector('input[name="search"]').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            this.form.submit();
+        }
+    });
+    
+    // Auto-focus search input if there's a search term
+    {% if search %}
+        document.querySelector('input[name="search"]').focus();
+    {% endif %}
+
+    function confirmDelete(message) {
+        return confirm(message);
+    }
+
+    function deletePatient(patientId) {
+        if (confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+            window.location.href = '/delete_patient/' + patientId;
+        }
+    }
+</script>
+{% endblock %}

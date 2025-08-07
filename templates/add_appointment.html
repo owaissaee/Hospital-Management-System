@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Appointment - Hospital Management System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-calendar-plus"></i> Schedule New Appointment</h1>
+        <p class="text-muted">Book an appointment for a patient with a doctor</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Appointments
+        </a>
+    </div>
+</div>
+
+<!-- Appointment Form -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-form"></i> Appointment Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <!-- Patient Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="patient_id" class="form-label">Select Patient *</label>
+                                <select class="form-select" id="patient_id" name="patient_id" required>
+                                    <option value="">Choose a patient...</option>
+                                    {% for patient in patients %}
+                                        <option value="{{ patient.id }}">{{ patient.name }} (Age: {{ patient.age }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a patient.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Doctor Selection -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="doctor_id" class="form-label">Select Doctor *</label>
+                                <select class="form-select" id="doctor_id" name="doctor_id" required>
+                                    <option value="">Choose a doctor...</option>
+                                    {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}" data-fee="{{ doctor.fee }}">
+                                            {{ doctor.name }} - {{ doctor.specialization }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a doctor.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Appointment Date -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="appointment_date" class="form-label">Appointment Date *</label>
+                                <input type="date" class="form-control" id="appointment_date" name="appointment_date" required>
+                                <div class="invalid-feedback">
+                                    Please select an appointment date.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Appointment Time -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="appointment_time" class="form-label">Appointment Time *</label>
+                                <input type="time" class="form-control" id="appointment_time" name="appointment_time" required>
+                                <div class="invalid-feedback">
+                                    Please select an appointment time.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fee -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="fee" class="form-label">Consultation Fee *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="fee" name="fee" step="0.01" min="0" required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please enter the consultation fee.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-4">
+                                <label for="notes" class="form-label">Appointment Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Enter any special notes or instructions for this appointment"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-calendar-check"></i> Schedule Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-fill fee when doctor is selected
+    document.getElementById('doctor_id').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const fee = selectedOption.getAttribute('data-fee');
+        if (fee) {
+            document.getElementById('fee').value = fee;
+        }
+    });
+    
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('appointment_date');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
+    });
+    
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (this.checkValidity()) {
+            if (!confirm('Are you sure you want to schedule this appointment?')) {
+                e.preventDefault();
+            }
+        }
+    });
+</script>
+{% endblock %}
